@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇游戏</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const scale = 20; // 每个格子的大小
+        const rows = canvas.height / scale;
+        const columns = canvas.width / scale;
+
+        let snake;
+        let apple;
+
+        (function setup() {
+            snake = new Snake();
+            apple = new Apple();
+            window.setInterval(game, 100); // 每100ms更新一次游戏状态
+        })();
+
+        function game() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+
+            snake.update(); // 更新蛇的位置
+            snake.draw(); // 绘制蛇
+            apple.draw(); // 绘制苹果
+
+            if (snake.eat(apple)) {
+                apple.pickLocation(); // 苹果被吃掉后重新生成
+            }
+
+            if (snake.collide()) {
+                alert("游戏结束！");
+                snake.reset(); // 游戏结束后重置蛇
+            }
+        }
+
+        function Snake() {
+            this.snakeArray = [{ x: 5, y: 5 }];
+            this.direction = "RIGHT";
+
+            this.draw = function() {
+                ctx.fillStyle = "green";
+                this.snakeArray.forEach((segment) => {
+                    ctx.fillRect(segment.x * scale, segment.y * scale, scale, scale);
+                });
+            };
+
+            this.update = function() {
+                const head = Object.assign({}, this.snakeArray[0]);
+
+                if (this.direction === "RIGHT") head.x++;
+                if (this.direction === "LEFT") head.x--;
+                if (this.direction === "UP") head.y--;
+                if (this.direction === "DOWN") head.y++;
+
+                this.snakeArray.unshift(head);
+                this.snakeArray.pop();
+            };
+
+            this.changeDirection = function(event) {
+                if (event.keyCode === 37 && this.direction !== "RIGHT") this.direction = "LEFT";
+                if (event.keyCode === 38 && this.direction !== "DOWN") this.direction = "UP";
+                if (event.keyCode === 39 && this.direction !== "LEFT") this.direction = "RIGHT";
+                if (event.keyCode === 40 && this.direction !== "UP") this.direction = "DOWN";
+            };
+
+            this.eat = function(apple) {
+                if (this.snakeArray[0].x === apple.x && this.snakeArray[0].y === apple.y) {
+                    this.snakeArray.push({});
+                    return true;
+                }
+                return false;
+            };
+
+            this.collide = function() {
+                // 碰到墙壁
+                if (this.snakeArray[0].x < 0 || this.snakeArray[0].x >= columns || this.snakeArray[0].y < 0 || this.snakeArray[0].y >= rows) {
+                    return true;
+                }
+
+                // 碰到自己
+                for (let i = 1; i < this.snakeArray.length; i++) {
+                    if (this.snakeArray[0].x === this.snakeArray[i].x && this.snakeArray[0].y === this.snakeArray[i].y) {
+                        return true;
+                    }
+                }
+
+                return false;
+            };
+
+            this.reset = function() {
+                this.snakeArray = [{ x: 5, y: 5 }];
+                this.direction = "RIGHT";
+            };
+        }
+
+        function Apple() {
+            this.x = 0;
+            this.y = 0;
+
+            this.draw = function() {
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x * scale, this.y * scale, scale, scale);
+            };
+
+            this.pickLocation = function() {
+                this.x = Math.floor(Math.random() * columns);
+                this.y = Math.floor(Math.random() * rows);
+            };
+        }
+
+        document.addEventListener("keydown", (event) => snake.changeDirection(event));
+
+    </script>
+</body>
+</html>
